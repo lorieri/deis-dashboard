@@ -1,7 +1,7 @@
-# deis-dashback
+# deis-dashboard
 deis dashboard backend
 
-requires deis-dashback
+requires deis-dashboard
 
 ToDo:
 
