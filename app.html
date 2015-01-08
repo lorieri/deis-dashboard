@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <!-- <link rel="icon" href="../../favicon.ico"> -->
+
+    <title>{{.Title}}</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="http://getbootstrap.com/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="http://getbootstrap.com/examples/dashboard/dashboard.css" rel="stylesheet">
+
+    <!-- Just for debugging purposes. Don't actually copy these 2 lines! -->
+    <!--[if lt IE 9]><script src="../../assets/js/ie8-responsive-file-warning.js"></script><![endif]-->
+    <script src="http://getbootstrap.com/assets/js/ie-emulation-modes-warning.js"></script>
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="#">Apps Dashboard</a>
+        </div>
+      </div> 
+    </nav></td></tr></tbody>
+
+    <div class="container-fluid">
+      <div class="row">
+
+        <div class="col-sm-3 col-md-2 sidebar">
+          <ul class="nav nav-sidebar">
+            <li class="active"><a href="#">Overview <span class="sr-only">(current)</span></a></li>
+            <li><a href="#toprequests">Top Requests</a></li>
+            <li><a href="#toperrors">Top Errors</a></li>
+            <li><a href="#toperrorsbyreferer">Top Errors by Referer</a></li>
+            <li><a href="#statusbyunits">Status by Units</a></li>
+            <li><a href="#topreferers">Top Referers</a></li>
+            <li><a href="#errorsbyreferers">Errors by Referers</a></li>
+            <li><a href="#errorsbyrequests">Errors by Requests</a></li>
+            <li><a href="#toprequestswithstatus">Top Requests with Status</a></li>
+          </ul>
+        </div>
+
+
+
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+          <h1 class="page-header">{{.App}} <small>{{.RequestsSecond}} Req/s</small><a id=toprequests></a></h1>
+	  <div class="progress" style="margin:0;padding:0">
+	    <div class="progress-bar progress-bar-info" style="width: 100%;margin:0;padding:0">{{.TotalRequests}} requests last 10 seconds </div>
+	  </div>
+	  <div class="progress">
+	    <div class="progress-bar progress-bar-success" style="width: {{.PercentSuccess}}%">{{.PercentSuccess}}%</div>
+	    <div class="progress-bar progress-bar-danger" style="width: {{.PercentErrors}}%">{{.PercentErrors}}%</div>
+	  </div>
+	  <div class="panel panel-primary">
+            <div class="panel-heading">Top Requests</div>
+            <div class="panel-body" style="margin:0;padding:0">
+              <div class="table-responsive">
+                <table class="table table-striped" style="margin:2px">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Request</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{range $k, $v := .Requests}}<tr><td>{{$v}}</td><td>{{$k}}</td></tr>{{end}}
+                  </tbody>
+                </table><a id=toperrors></a>
+              </div>
+            </div>
+          </div>
+	  <div class="panel panel-danger">
+            <div class="panel-heading">Top Errors</div>
+            <div class="panel-body" style="margin:0;padding:0">
+              <div class="table-responsive">
+                <table class="table table-striped" style="margin:2px">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Status - Request</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{range $k, $v := .ErrorsByRequests}}<tr><td>{{$v}}</td><td>{{$k}}</td></tr>{{end}}
+                  </tbody>
+                </table><a id=toperrorsbyreferer></a>
+              </div>
+            </div>
+          </div>
+	  <div class="panel panel-warning">
+            <div class="panel-heading">Top Errors by Referer</div>
+            <div class="panel-body" style="margin:0;padding:0">
+              <div class="table-responsive">
+                <table class="table table-striped" style="margin:2px">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Status Request</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{range $k, $v := .ErrorsByReferers}}<tr><td>{{$v}}</td><td>{{$k}}</td></tr>{{end}}
+                  </tbody>
+                </table><a id=statusbyunits></a>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-info">
+            <div class="panel-heading">Status by Units</div>
+            <div class="panel-body" style="margin:0;padding:0">
+              <div class="table-responsive">
+                <table class="table table-striped" style="margin:2px">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Status - Unit</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{range $k, $v := .StatusByUnits}}<tr><td>{{$v}}</td><td>{{$k}}</td></tr>{{end}}
+                  </tbody>
+                </table><a id=topreferers></a>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-info">
+            <div class="panel-heading">Top Referers</div>
+            <div class="panel-body" style="margin:0;padding:0">
+              <div class="table-responsive">
+                <table class="table table-striped" style="margin:2px">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Request</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{range $k, $v := .Referers}}<tr><td>{{$v}}</td><td>{{$k}}</td></tr>{{end}}
+                  </tbody>
+                </table><a id=errorsbyreferers></a>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-warning">
+            <div class="panel-heading">Errors by Referers</div>
+            <div class="panel-body" style="margin:0;padding:0">
+              <div class="table-responsive">
+                <table class="table table-striped" style="margin:2px">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Status - Request</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{range $k, $v := .ErrorsByReferers}}<tr><td>{{$v}}</td><td>{{$k}}</td></tr>{{end}}
+                  </tbody>
+                </table><a id=errorsbyrequests></a>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-warning">
+            <div class="panel-heading">Errors by Requests</div>
+            <div class="panel-body" style="margin:0;padding:0">
+              <div class="table-responsive">
+                <table class="table table-striped" style="margin:2px">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Status - Request</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{range $k, $v := .ErrorsByRequests}}<tr><td>{{$v}}</td><td>{{$k}}</td></tr>{{end}}
+                  </tbody>
+                </table><a id=toprequestswithstatus></a>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-info">
+            <div class="panel-heading">Top Requests with Status</div>
+            <div class="panel-body" style="margin:0;padding:0">
+              <div class="table-responsive">
+                <table class="table table-striped" style="margin:2px">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Status - Request</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{range $k, $v := .RequestsByStatus}}<tr><td>{{$v}}</td><td>{{$k}}</td></tr>{{end}}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script src="http://getbootstrap.com/dist/js/bootstrap.min.js"></script>
+    <script src="http://getbootstrap.com/assets/js/docs.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="http://getbootstrap.com/assets/js/ie10-viewport-bug-workaround.js"></script>
+<script>
+$( "li" ).click(function() {
+  $( "li" ).removeClass( "active" );
+  $( this ).toggleClass( "active" );
+});
+</script>
+  </body>
+</html>
+

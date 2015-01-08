@@ -1,0 +1,56 @@
+{ 
+    title : {
+        text: 'Requests',
+        subtext: 'from last 10 seconds',
+        x:'right'
+    },
+    tooltip : {trigger: 'axis'},
+    toolbox: { show : true, y: 'bottom', feature : { mark : {show: true}, dataZoom : {show: true}, dataView : {show: true, readOnly: false}, magicType : {show: true, type: ['line', 'bar', 'stack', 'tiled']}, restore : {show: true}, saveAsImage : {show: true} } },
+    calculable : true,
+
+    legend: {
+	data: {{.LegendData}}
+    },
+    xAxis : [
+        {
+            type : 'category',
+            splitLine : {show : false},
+	    data: {{.XaxisData}}
+        }
+    ],
+    yAxis : [
+        {
+            type : 'value',
+            position: 'right'
+        }
+    ],
+    series : [
+        {
+            name: 'Errors',
+            type:'bar',
+            tooltip : {trigger: 'item'},
+            stack: 'req',
+	    data: {{.ErrorsData}}
+        },
+        {
+            name:'Success',
+            type:'bar',
+            tooltip : {trigger: 'item'},
+            stack: 'req',
+	    data: {{.SuccessData}}
+        },
+/*
+	{
+            name:'total',
+            type:'line',
+	    data:'',
+        },
+*/
+        { name:'Total', type:'pie', tooltip : { trigger: 'item', formatter: '{a} <br/>{b} : {c} ({d}%)' }, center: [160,130], radius : [0, 80],
+
+	    data: {{.PieData}}
+            ,
+
+	    itemStyle: { normal : { labelLine: { length : 20 }}}
+        }
+    ]}

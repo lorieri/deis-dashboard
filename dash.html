@@ -1,0 +1,32 @@
+<html>
+<head>
+<style>
+ div {
+  display: inline-block;
+position:absolute;
+}
+</style>
+</head>
+<body style="margin:0;padding:0" onload="draw()">
+    <div id="main" style="left:0;height:100%;width:100%;float:left;margin-right:0;padding-right:0;border-right-width:0"></div>
+    <script src="/static/www/js/echarts.js"></script> 
+    <script src="/static/www2/js/dist/echarts-all.js"></script> 
+    <script type="text/javascript" src="/static/jquery.min.js"></script>
+    <script>
+        var myChart = echarts.init(document.getElementById('main'));
+
+	require(['static/theme/dark'], function(tarTheme){
+                curTheme = tarTheme;
+                myChart.setTheme(curTheme);
+        })
+
+	function draw(){
+		$.getJSON('/var.json', function(jd) {
+        	var option=jd;
+	       	myChart.setOption(option);
+	        setTimeout(function(){ draw() }, 10000);
+	  });
+	}
+
+    </script>
+</body>
