@@ -1,7 +1,7 @@
 { 
     title : {
         text: 'Requests',
-        subtext: 'from last 10 seconds\nlast logline: {{.LastLog}}\nTotal Bytes: {{.TotalData}}',
+        subtext: 'from last 10 seconds\n\ntotal requests: {{.TotalRequests}}\ntotal bytes: {{.TotalData}}\n\nlast logline: {{.LastLog}}',
         x:'left',
 	y:'center',
     },

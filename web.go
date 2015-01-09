@@ -53,14 +53,15 @@ type AppPage struct {
 }
 
 type Var struct {
-	LegendData   string
-	XaxisData    string
-	ErrorsData   string
-	SuccessData  string
-	TotalData    string
-	PieData      string
-	PieDataBytes string
-	LastLog      string
+	LegendData    string
+	XaxisData     string
+	ErrorsData    string
+	SuccessData   string
+	TotalData     string
+	TotalRequests string
+	PieData       string
+	PieDataBytes  string
+	LastLog       string
 }
 func apps(w http.ResponseWriter, r *http.Request) {
         title := "Apps"
@@ -169,11 +170,13 @@ func varsapps(w http.ResponseWriter, r *http.Request){
 }
 
 func vars(w http.ResponseWriter, r *http.Request){
-	client := redis.NewClient(&redis.Options{Network: "tcp", Addr: "127.0.0.1:6379"})
-	apps, _     := client.ZRangeWithScores("union_z_top_apps", 0 , -1).Result()
-	appbytes, _ := client.ZRangeWithScores("union_z_top_apps_bytes_sent", 0, -1).Result()
-	lastlog,_   := client.Get("union_s_last_log_time").Result()
-	totaldata,_ := client.Get("union_k_total_bytes").Result()
+	client           := redis.NewClient(&redis.Options{Network: "tcp", Addr: "127.0.0.1:6379"})
+	apps, _          := client.ZRangeWithScores("union_z_top_apps", 0 , -1).Result()
+	appbytes, _      := client.ZRangeWithScores("union_z_top_apps_bytes_sent", 0, -1).Result()
+	lastlog,_        := client.Get("union_s_last_log_time").Result()
+	totaldata,_      := client.Get("union_k_total_bytes").Result()
+        totalrequests, _ := client.Get("union_k_total_requests").Result()
+
 
 	dataapps  := make([]string, 0)
 	dataerror := make([]int, 0)
@@ -215,14 +218,15 @@ func vars(w http.ResponseWriter, r *http.Request){
 	pie_data_bytes := "["+datapiebytes_str+"]"
 
 	p := &Var {
-		LegendData:   string(legend_data),
-		XaxisData:    string(xaxis_data),
-		ErrorsData:   string(errors_data),
-		SuccessData:  string(success_data),
-		PieData:      pie_data,
-		PieDataBytes: pie_data_bytes,
-		LastLog:      lastlog,
-		TotalData:    totaldata,
+		LegendData:    string(legend_data),
+		XaxisData:     string(xaxis_data),
+		ErrorsData:    string(errors_data),
+		SuccessData:   string(success_data),
+		PieData:       pie_data,
+		PieDataBytes:  pie_data_bytes,
+		LastLog:       lastlog,
+		TotalData:     totaldata,
+		TotalRequests: totalrequests,
 	}
 	t, _ := template.ParseFiles("data.json")
 	t.Execute(w, p)
