@@ -9,6 +9,7 @@ position:absolute;
 </head>
 <body style="margin:0;padding:0" onload="draw()">
     <div id="main" style="left:0;height:100%;width:100%;float:left;margin-right:0;padding-right:0;border-right-width:0"></div>
+    <div style="right:0;"><select id="apps" onchange="if (this.value) window.location.href=this.value"><option value="">Go to App</option></select></div>
     <script src="/static/www/js/echarts.js"></script> 
     <script src="/static/www2/js/dist/echarts-all.js"></script> 
     <script type="text/javascript" src="/static/jquery.min.js"></script>
@@ -20,12 +21,25 @@ position:absolute;
                 myChart.setTheme(curTheme);
         })
 
+
+	function selectapps(){
+		$.getJSON('/apps.json', function(sel) {
+			var $select = $('#apps'); 
+			$select.find('option').remove();
+			$select.append('<option value="">Go to App</option></select>');  
+			$.each(sel,function(key, value){
+				$select.append('<option value=/apps/' + value.name + '>' + value.name + '</option>');
+			});
+		});
+	}
+	
+
 	function draw(){
+		selectapps();
 		$.getJSON('/var.json', function(jd) {
-        	var option=jd;
-	       	myChart.setOption(option);
-	        setTimeout(function(){ draw() }, 10000);
-	  });
+	       		myChart.setOption(jd);
+		        setTimeout(function(){ draw() }, 10000);
+		});
 	}
 
     </script>
