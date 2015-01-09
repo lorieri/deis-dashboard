@@ -11,6 +11,7 @@ import (
 
 func main() {
 	http.HandleFunc("/var.json", vars)
+	http.HandleFunc("/apps.json", varappsname)
 	http.HandleFunc("/", dashboard)
 	http.HandleFunc("/apps/",apps)
 	http.HandleFunc("/apps/var.json", varsapps)
@@ -38,6 +39,7 @@ type AppPage struct {
 	TotalRequests    float64
 	TotalSuccess     float64
 	TotalErrors      float64
+	BytesPerSecond   float64
 	PercentErrors    string
 	PercentSuccess   string
 	Requests         map[string]float64
@@ -46,17 +48,20 @@ type AppPage struct {
         ErrorsByReferers map[string]float64
 	ErrorsByRequests map[string]float64
 	RequestsByStatus map[string]float64
+	RemoteByStatus   map[string]float64
+	RemoteBytesSent  map[string]float64
 }
 
 type Var struct {
-	LegendData  string
-	XaxisData   string
-	ErrorsData  string
-	SuccessData string
-	//TotalData   string
-	PieData     string
+	LegendData   string
+	XaxisData    string
+	ErrorsData   string
+	SuccessData  string
+	TotalData    string
+	PieData      string
+	PieDataBytes string
+	LastLog      string
 }
-
 func apps(w http.ResponseWriter, r *http.Request) {
         title := "Apps"
 	app := r.URL.Path[len("/apps/"):]
@@ -71,11 +76,15 @@ func apps(w http.ResponseWriter, r *http.Request) {
 	}
 
 	totalrequests_str, _ := client.Get("union_k_total_app_requests_"+app).Result()
-	totalrequests, _     := strconv.ParseFloat(totalrequests_str,32)
+	totalrequests, _     := strconv.ParseFloat(totalrequests_str,64)
 	requestsseconds      := totalrequests/10
 
+	bytessent_str,_      := client.Get("union_k_total_app_bytes_sent_"+app).Result()
+	bytessent,_	     := strconv.ParseFloat(bytessent_str,64)
+	bytespersecond       := bytessent/10
+
 	totalerrors_str, _   := client.Get("union_k_total_app_errors_"+app).Result()
-	totalerrors, _       := strconv.ParseFloat(totalerrors_str,32)
+	totalerrors, _       := strconv.ParseFloat(totalerrors_str,64)
 
 	totalsuccess         := totalrequests-totalerrors
 
@@ -109,6 +118,18 @@ func apps(w http.ResponseWriter, r *http.Request) {
 		topstatus[v.Member] = v.Score
 	}
 
+	result, _ = client.ZRevRangeWithScores("union_z_top_remote_addr_bytes_sent_"+app, "0" , "10").Result()
+	remotebytessent := make(map[string]float64)
+	for _,v := range result {
+		remotebytessent[v.Member] = v.Score
+	}
+
+	result, _ = client.ZRevRangeWithScores("union_z_top_remote_addr_status_"+app, "0" , "10").Result()
+	remotebystatus := make(map[string]float64)
+	for _,v := range result {
+		remotebystatus[v.Member] = v.Score
+	}
+
         p := &AppPage{
 		Title: title,
 		App: app,
@@ -116,6 +137,7 @@ func apps(w http.ResponseWriter, r *http.Request) {
 		TotalRequests:    totalrequests,
 		TotalSuccess:     totalsuccess,
 		TotalErrors:      totalerrors,
+		BytesPerSecond:   bytespersecond,
 		Requests:         toprequests,
 		PercentErrors:    strconv.FormatFloat(totalerrors/totalrequests*100, 'f', 1, 64),
 		PercentSuccess:   strconv.FormatFloat(totalsuccess/totalrequests*100, 'f', 1, 64),
@@ -124,8 +146,23 @@ func apps(w http.ResponseWriter, r *http.Request) {
 		ErrorsByReferers: toperrorsreferer,
 		ErrorsByRequests: toperrors,
 		RequestsByStatus: topstatus,
+		RemoteByStatus:   remotebystatus,
+		RemoteBytesSent:  remotebytessent,
 	}
         t.Execute(w, p)
+}
+
+func varappsname(w http.ResponseWriter, r *http.Request){
+	client   := redis.NewClient(&redis.Options{Network: "tcp", Addr: "127.0.0.1:6379"})
+        apps, _  := client.ZRangeWithScores("union_z_top_apps", 0 , -1).Result()
+
+	appsjson := "["
+
+        for k,_ := range apps {
+                appsjson      = appsjson+"{name: '"+apps[k].Member+"'},"
+        }
+
+	fmt.Fprintf(w, appsjson+"]")
 }
 
 func varsapps(w http.ResponseWriter, r *http.Request){
@@ -133,45 +170,59 @@ func varsapps(w http.ResponseWriter, r *http.Request){
 
 func vars(w http.ResponseWriter, r *http.Request){
 	client := redis.NewClient(&redis.Options{Network: "tcp", Addr: "127.0.0.1:6379"})
-	apps, _ := client.ZRangeWithScores("union_z_top_apps", 0 , -1).Result()
+	apps, _     := client.ZRangeWithScores("union_z_top_apps", 0 , -1).Result()
+	appbytes, _ := client.ZRangeWithScores("union_z_top_apps_bytes_sent", 0, -1).Result()
+	lastlog,_   := client.Get("union_s_last_log_time").Result()
+	totaldata,_ := client.Get("union_k_total_bytes").Result()
 
 	dataapps  := make([]string, 0)
 	dataerror := make([]int, 0)
 	datasucc  := make([]int, 0)
 	datapie_str := ""
+	datapiebytes_str := ""
 
 	for k,_ := range apps {
-		appname := apps[k].Member
+		appname      := apps[k].Member
 		apptotal_str := strconv.FormatFloat(apps[k].Score, 'f', 0, 64)
-		apptotal := apps[k].Score
+		apptotal     := apps[k].Score
 		apperr_str,_ := client.Get("union_k_total_app_errors_"+appname).Result()
-		apperr,_ := strconv.Atoi(apperr_str)
+		apperr,_     := strconv.Atoi(apperr_str)
 
-		appsuc := int(apptotal)-int(apperr)
+		appsuc       := int(apptotal)-int(apperr)
 		if appsuc < 0 {
 			appsuc = 0
 		}
 		// appreqs := apptotal/10
 
-		dataapps  = append(dataapps, appname)
-		dataerror = append(dataerror, apperr)
-		datasucc  = append(datasucc, appsuc)
+		dataapps    = append(dataapps, appname)
+		dataerror   = append(dataerror, apperr)
+		datasucc    = append(datasucc, appsuc)
 		datapie_str = datapie_str+"{value: "+apptotal_str+", name: '"+appname+"'}," // ...
 	}
 	dataapps_legend := append(dataapps, "Success","Errors")
+
+	for k,_ := range appbytes {
+		appnamebytes      := appbytes[k].Member
+		apptotalbytes_str := strconv.FormatFloat(appbytes[k].Score, 'f', 0, 64)
+		datapiebytes_str   = datapiebytes_str+"{value: "+apptotalbytes_str+", name: '"+appnamebytes+"'},"
+	}
 
 	legend_data,_  := json.Marshal(dataapps_legend) //"['go','java','ruby','Success','Errors']"
 	xaxis_data,_   := json.Marshal(dataapps)        //"['go','java','ruby']"
 	errors_data,_  := json.Marshal(dataerror)       //"[100,50,30]"
 	success_data,_ := json.Marshal(datasucc)        //"[100,50,30]"
 	pie_data       := "["+datapie_str+"]"           //"[{value:1048, name:'go'},{value:251, name:'java'},{value:600, name:'ruby'},]"
+	pie_data_bytes := "["+datapiebytes_str+"]"
 
 	p := &Var {
-		LegendData:  string(legend_data),
-		XaxisData:   string(xaxis_data),
-		ErrorsData:  string(errors_data),
-		SuccessData: string(success_data),
-		PieData:     pie_data,
+		LegendData:   string(legend_data),
+		XaxisData:    string(xaxis_data),
+		ErrorsData:   string(errors_data),
+		SuccessData:  string(success_data),
+		PieData:      pie_data,
+		PieDataBytes: pie_data_bytes,
+		LastLog:      lastlog,
+		TotalData:    totaldata,
 	}
 	t, _ := template.ParseFiles("data.json")
 	t.Execute(w, p)
