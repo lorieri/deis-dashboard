@@ -1,8 +1,9 @@
 { 
     title : {
         text: 'Requests',
-        subtext: 'from last 10 seconds',
-        x:'right'
+        subtext: 'from last 10 seconds\nlast logline: {{.LastLog}}\nTotal Bytes: {{.TotalData}}',
+        x:'left',
+	y:'center',
     },
     tooltip : {trigger: 'axis'},
     toolbox: { show : true, y: 'bottom', feature : { mark : {show: true}, dataZoom : {show: true}, dataView : {show: true, readOnly: false}, magicType : {show: true, type: ['line', 'bar', 'stack', 'tiled']}, restore : {show: true}, saveAsImage : {show: true} } },
@@ -52,5 +53,12 @@
             ,
 
 	    itemStyle: { normal : { labelLine: { length : 20 }}}
+        },
+        { name:'Bytes Transfered', type:'pie', tooltip : { trigger: 'item', formatter: '{a} <br/>{b} : {c} ({d}%)' }, center: [460,130], radius : [0, 80],
+
+            data: {{.PieDataBytes}}
+            ,
+
+            itemStyle: { normal : { labelLine: { length : 20 }}}
         }
     ]}
