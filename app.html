@@ -41,6 +41,7 @@
 
         <div class="col-sm-3 col-md-2 sidebar">
           <ul class="nav nav-sidebar">
+            <li style='background-color:lightgray'><a href=/><b>Back to Dashboard</b></a></li>
             <li class="active"><a href="#">Overview <span class="sr-only">(current)</span></a></li>
             <li><a href="#toprequests">Top Requests</a></li>
             <li><a href="#toperrors">Top Errors</a></li>
@@ -50,13 +51,16 @@
             <li><a href="#errorsbyreferers">Errors by Referers</a></li>
             <li><a href="#errorsbyrequests">Errors by Requests</a></li>
             <li><a href="#toprequestswithstatus">Top Requests with Status</a></li>
+            <li><a href="#topremotewithstatus">Top Remote with Status</a></li>
+            <li><a href="#topremotebytessent">Top Remote Bytes Sent</a></li>
+	
           </ul>
         </div>
 
 
 
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-          <h1 class="page-header">{{.App}} <small>{{.RequestsSecond}} Req/s</small><a id=toprequests></a></h1>
+          <h1 class="page-header">{{.App}} <small>{{.RequestsSecond}} Req/s - {{.BytesPerSecond}} Bytes/s <a id=toprequests></a></h1>
 	  <div class="progress" style="margin:0;padding:0">
 	    <div class="progress-bar progress-bar-info" style="width: 100%;margin:0;padding:0">{{.TotalRequests}} requests last 10 seconds </div>
 	  </div>
@@ -65,10 +69,10 @@
 	    <div class="progress-bar progress-bar-danger" style="width: {{.PercentErrors}}%">{{.PercentErrors}}%</div>
 	  </div>
 	  <div class="panel panel-primary">
-            <div class="panel-heading">Top Requests</div>
+            <div class="panel-heading"><b><big>Top Requests</big></b></div>
             <div class="panel-body" style="margin:0;padding:0">
               <div class="table-responsive">
-                <table class="table table-striped" style="margin:2px">
+                <table class="table table-striped" style="margin:2px,padding:2px">
                   <thead>
                     <tr>
                       <th>#</th>
@@ -83,10 +87,10 @@
             </div>
           </div>
 	  <div class="panel panel-danger">
-            <div class="panel-heading">Top Errors</div>
+            <div class="panel-heading"><b><big>Top Errors</big></b></div>
             <div class="panel-body" style="margin:0;padding:0">
               <div class="table-responsive">
-                <table class="table table-striped" style="margin:2px">
+                <table class="table table-striped" style="margin:2px,padding:2px">
                   <thead>
                     <tr>
                       <th>#</th>
@@ -101,10 +105,10 @@
             </div>
           </div>
 	  <div class="panel panel-warning">
-            <div class="panel-heading">Top Errors by Referer</div>
+            <div class="panel-heading"><b><big>Top Errors by Referer</big></b></div>
             <div class="panel-body" style="margin:0;padding:0">
               <div class="table-responsive">
-                <table class="table table-striped" style="margin:2px">
+                <table class="table table-striped" style="margin:2px,padding:2px">
                   <thead>
                     <tr>
                       <th>#</th>
@@ -119,10 +123,10 @@
             </div>
           </div>
           <div class="panel panel-info">
-            <div class="panel-heading">Status by Units</div>
+            <div class="panel-heading"><b><big>Status by Units</big></b></div>
             <div class="panel-body" style="margin:0;padding:0">
               <div class="table-responsive">
-                <table class="table table-striped" style="margin:2px">
+                <table class="table table-striped" style="margin:2px,padding:2px">
                   <thead>
                     <tr>
                       <th>#</th>
@@ -137,10 +141,10 @@
             </div>
           </div>
           <div class="panel panel-info">
-            <div class="panel-heading">Top Referers</div>
+            <div class="panel-heading"><b><big>Top Referers</big></b></div>
             <div class="panel-body" style="margin:0;padding:0">
               <div class="table-responsive">
-                <table class="table table-striped" style="margin:2px">
+                <table class="table table-striped" style="margin:2px,padding:2px">
                   <thead>
                     <tr>
                       <th>#</th>
@@ -155,10 +159,10 @@
             </div>
           </div>
           <div class="panel panel-warning">
-            <div class="panel-heading">Errors by Referers</div>
+            <div class="panel-heading"><b><big>Errors by Referers</big></b></div>
             <div class="panel-body" style="margin:0;padding:0">
               <div class="table-responsive">
-                <table class="table table-striped" style="margin:2px">
+                <table class="table table-striped" style="margin:2px,padding:2px">
                   <thead>
                     <tr>
                       <th>#</th>
@@ -173,10 +177,10 @@
             </div>
           </div>
           <div class="panel panel-warning">
-            <div class="panel-heading">Errors by Requests</div>
+            <div class="panel-heading"><b><big>Errors by Requests</big></b></div>
             <div class="panel-body" style="margin:0;padding:0">
               <div class="table-responsive">
-                <table class="table table-striped" style="margin:2px">
+                <table class="table table-striped" style="margin:2px,padding:2px">
                   <thead>
                     <tr>
                       <th>#</th>
@@ -191,10 +195,10 @@
             </div>
           </div>
           <div class="panel panel-info">
-            <div class="panel-heading">Top Requests with Status</div>
+            <div class="panel-heading"><b><big>Top Requests with Status</big></b></div>
             <div class="panel-body" style="margin:0;padding:0">
               <div class="table-responsive">
-                <table class="table table-striped" style="margin:2px">
+                <table class="table table-striped" style="margin:2px,padding:2px">
                   <thead>
                     <tr>
                       <th>#</th>
@@ -203,6 +207,42 @@
                   </thead>
                   <tbody>
                     {{range $k, $v := .RequestsByStatus}}<tr><td>{{$v}}</td><td>{{$k}}</td></tr>{{end}}
+                  </tbody>
+                </table><a id=topremotewithstatus></a>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-info">
+            <div class="panel-heading"><b><big>Top Remote with Status</big></b></div>
+            <div class="panel-body" style="margin:0;padding:0">
+              <div class="table-responsive">
+                <table class="table table-striped" style="margin:2px,padding:2px">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Status - Request</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{range $k, $v := .RemoteByStatus}}<tr><td>{{$v}}</td><td>{{$k}}</td></tr>{{end}}
+                  </tbody>
+                </table><a id=topremotebytessent></a>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-info">
+            <div class="panel-heading"><b><big>Top Remote Bytes Sent</big></b></div>
+            <div class="panel-body" style="margin:0;padding:0">
+              <div class="table-responsive">
+                <table class="table table-striped" style="margin:2px,padding:2px">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Status - Request</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{range $k, $v := .RemoteBytesSent}}<tr><td>{{$v}}</td><td>{{$k}}</td></tr>{{end}}
                   </tbody>
                 </table>
               </div>
