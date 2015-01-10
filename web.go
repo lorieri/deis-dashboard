@@ -7,6 +7,7 @@ import (
         "gopkg.in/redis.v2"
 	"strconv"
 	"encoding/json"
+	"os"
 )
 
 func main() {
@@ -24,6 +25,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+// copied from github.com/deis
+func getopt(name, dfault string) string {
+        value := os.Getenv(name)
+        if value == "" {
+                value = dfault
+        }
+        return value
 }
 
 type Page struct {
@@ -68,7 +78,8 @@ func apps(w http.ResponseWriter, r *http.Request) {
 	app := r.URL.Path[len("/apps/"):]
         t, _ := template.ParseFiles("app.html")
 
-        client := redis.NewClient(&redis.Options{Network: "tcp", Addr: "127.0.0.1:6379"})
+	redisServer := getopt("REDIS_SERVER", "127.0.0.1:6379")
+        client := redis.NewClient(&redis.Options{Network: "tcp", Addr: redisServer})
 
         result, _ := client.ZRevRangeWithScores("union_z_top_app_upstream_status_"+app, "0" , "10").Result()
 	upstreamstatus := make(map[string]float64)
@@ -154,7 +165,8 @@ func apps(w http.ResponseWriter, r *http.Request) {
 }
 
 func varappsname(w http.ResponseWriter, r *http.Request){
-	client   := redis.NewClient(&redis.Options{Network: "tcp", Addr: "127.0.0.1:6379"})
+	redisServer := getopt("REDIS_SERVER", "127.0.0.1:6379")
+	client   := redis.NewClient(&redis.Options{Network: "tcp", Addr: redisServer})
         apps, _  := client.ZRangeWithScores("union_z_top_apps", 0 , -1).Result()
 
 	appsjson := "["
@@ -170,7 +182,8 @@ func varsapps(w http.ResponseWriter, r *http.Request){
 }
 
 func vars(w http.ResponseWriter, r *http.Request){
-	client           := redis.NewClient(&redis.Options{Network: "tcp", Addr: "127.0.0.1:6379"})
+	redisServer := getopt("REDIS_SERVER", "127.0.0.1:6379")
+	client           := redis.NewClient(&redis.Options{Network: "tcp", Addr: redisServer})
 	apps, _          := client.ZRangeWithScores("union_z_top_apps", 0 , -1).Result()
 	appbytes, _      := client.ZRangeWithScores("union_z_top_apps_bytes_sent", 0, -1).Result()
 	lastlog,_        := client.Get("union_s_last_log_time").Result()
