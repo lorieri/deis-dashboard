@@ -8,9 +8,24 @@ import (
 	"strconv"
 	"encoding/json"
 	"os"
+	"github.com/coreos/go-etcd/etcd"
+	"strings"
 )
 
+var redisServer string
+var etcdServers []string
+
 func main() {
+	getetcdServers := getopt("ETCD_HOSTS", "")
+	if getetcdServers == "" {
+		panic("Please set ETCD_HOSTS environment, comma separated http:// hosts with port")
+	}
+	etcdServers = strings.Split(getetcdServers, ",")
+	client := etcd.NewClient(etcdServers)
+	fmt.Println(client)
+	fmt.Println("Etcd Servers:")
+	fmt.Println(etcdServers)
+	setRedis()
 	http.HandleFunc("/var.json", vars)
 	http.HandleFunc("/apps.json", varappsname)
 	http.HandleFunc("/", dashboard)
@@ -35,6 +50,33 @@ func getopt(name, dfault string) string {
         }
         return value
 }
+
+
+// http://blog.gopheracademy.com/advent-2013/day-06-service-discovery-with-etcd/
+func updateRedis(){
+        client := etcd.NewClient(etcdServers)
+        watchChan := make(chan *etcd.Response)
+        go client.Watch("/deis/logs/host", 0, false, watchChan, nil)
+        resp := <-watchChan
+        redisServer = resp.Node.Value
+        updateRedis()
+}
+
+func setRedis(){
+        redisServer = getopt("REDIS_SERVER", "")
+	fmt.Println("Set redisServer as "+redisServer)
+	if redisServer == "" {
+	        client := etcd.NewClient(etcdServers)
+		resp, err := client.Get("/deis/logs/host", false, false) //deis-dashback run with X-Fleet Machine-of deis-logger
+		if err != nil {
+			panic(err)
+		}
+		fmt.Println("Set Redis Server as "+resp.Node.Value+":6969")
+	        redisServer = resp.Node.Value+":6969"
+		go updateRedis()
+	}
+}
+
 
 type Page struct {
 	Title string
@@ -73,12 +115,12 @@ type Var struct {
 	PieDataBytes  string
 	LastLog       string
 }
+
 func apps(w http.ResponseWriter, r *http.Request) {
         title := "Apps"
 	app := r.URL.Path[len("/apps/"):]
         t, _ := template.ParseFiles("app.html")
 
-	redisServer := getopt("REDIS_SERVER", "127.0.0.1:6379")
         client := redis.NewClient(&redis.Options{Network: "tcp", Addr: redisServer})
 
         result, _ := client.ZRevRangeWithScores("union_z_top_app_upstream_status_"+app, "0" , "10").Result()
@@ -165,7 +207,6 @@ func apps(w http.ResponseWriter, r *http.Request) {
 }
 
 func varappsname(w http.ResponseWriter, r *http.Request){
-	redisServer := getopt("REDIS_SERVER", "127.0.0.1:6379")
 	client   := redis.NewClient(&redis.Options{Network: "tcp", Addr: redisServer})
         apps, _  := client.ZRangeWithScores("union_z_top_apps", 0 , -1).Result()
 
@@ -182,7 +223,6 @@ func varsapps(w http.ResponseWriter, r *http.Request){
 }
 
 func vars(w http.ResponseWriter, r *http.Request){
-	redisServer := getopt("REDIS_SERVER", "127.0.0.1:6379")
 	client           := redis.NewClient(&redis.Options{Network: "tcp", Addr: redisServer})
 	apps, _          := client.ZRangeWithScores("union_z_top_apps", 0 , -1).Result()
 	appbytes, _      := client.ZRangeWithScores("union_z_top_apps_bytes_sent", 0, -1).Result()
