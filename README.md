@@ -36,7 +36,7 @@ $ deis open
 
 ## Dashboard
 
-If the instalation successed you may see the screen bellow, if you are not able to see it try sending some traffic in your cluster and wait for ~10 seconds
+If the instalation successed you may see the screen bellow, if you are not able to see your apps try sending some traffic in your cluster and wait for ~10 seconds
 
 ### Main Page
 

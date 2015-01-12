@@ -203,6 +203,7 @@ func apps(w http.ResponseWriter, r *http.Request) {
 		RemoteByStatus:   remotebystatus,
 		RemoteBytesSent:  remotebytessent,
 	}
+
         t.Execute(w, p)
 }
 
@@ -210,13 +211,16 @@ func varappsname(w http.ResponseWriter, r *http.Request){
 	client   := redis.NewClient(&redis.Options{Network: "tcp", Addr: redisServer})
         apps, _  := client.ZRangeWithScores("union_z_top_apps", 0 , -1).Result()
 
-	appsjson := "["
-
+	var appsjson string
         for k,_ := range apps {
                 appsjson      = appsjson+"{name: '"+apps[k].Member+"'},"
         }
 
-	fmt.Fprintf(w, appsjson+"]")
+	if len(appsjson) == 0 {
+		appsjson = "{name:'none'}"
+	}
+
+	fmt.Fprintf(w, "["+appsjson+"]")
 }
 
 func varsapps(w http.ResponseWriter, r *http.Request){
@@ -226,9 +230,9 @@ func vars(w http.ResponseWriter, r *http.Request){
 	client           := redis.NewClient(&redis.Options{Network: "tcp", Addr: redisServer})
 	apps, _          := client.ZRangeWithScores("union_z_top_apps", 0 , -1).Result()
 	appbytes, _      := client.ZRangeWithScores("union_z_top_apps_bytes_sent", 0, -1).Result()
-	lastlog,_        := client.Get("union_s_last_log_time").Result()
-	totaldata,_      := client.Get("union_k_total_bytes").Result()
-        totalrequests, _ := client.Get("union_k_total_requests").Result()
+	lastlog_str,_        := client.Get("union_s_last_log_time").Result()
+	totaldata_str,_      := client.Get("union_k_total_bytes").Result()
+        totalrequests_str, _ := client.Get("union_k_total_requests").Result()
 
 
 	dataapps  := make([]string, 0)
@@ -264,22 +268,72 @@ func vars(w http.ResponseWriter, r *http.Request){
 	}
 
 	legend_data,_  := json.Marshal(dataapps_legend) //"['go','java','ruby','Success','Errors']"
-	xaxis_data,_   := json.Marshal(dataapps)        //"['go','java','ruby']"
-	errors_data,_  := json.Marshal(dataerror)       //"[100,50,30]"
-	success_data,_ := json.Marshal(datasucc)        //"[100,50,30]"
-	pie_data       := "["+datapie_str+"]"           //"[{value:1048, name:'go'},{value:251, name:'java'},{value:600, name:'ruby'},]"
-	pie_data_bytes := "["+datapiebytes_str+"]"
+	legend_data_str := string(legend_data)
+
+
+	//&{LegendData:["Success","Errors"] XaxisData:[] ErrorsData:[] SuccessData:[] TotalData: TotalRequests: PieData:[] PieDataBytes:[] LastLog:}
+
+	var xaxis_data_str string
+	if len(dataapps) == 0 {
+		xaxis_data_str = "[0]"
+	}else{
+		xaxis_data,_      := json.Marshal(dataapps)        //"['go','java','ruby']"
+		xaxis_data_str     = string(xaxis_data)
+	}
+
+	var errors_data_str string
+	if len(dataerror) == 0 {
+		errors_data_str    = "[0]"
+	}else{
+		errors_data,_     := json.Marshal(dataerror)       //"[100,50,30]"
+		errors_data_str    = string(errors_data)
+	}
+
+	var success_data_str string
+	if len(datasucc) == 0 {
+		success_data_str   = "[0]"
+	}else{
+		success_data,_    := json.Marshal(datasucc)        //"[100,50,30]"
+		success_data_str   = string(success_data)
+	}
+
+	if totaldata_str == "" {
+		totaldata_str      = "0"
+	}
+
+	if totalrequests_str == "" {
+		totalrequests_str  = "0"
+	}
+
+	var pie_data_str string
+	if  datapie_str == "" {
+		pie_data_str       = "[{value:0, name:'none'}]"
+	}else{
+		pie_data_str       = "["+datapie_str+"]" //"[{value:1048, name:'go'},{value:251, name:'java'},{value:600, name:'ruby'},]"
+	}
+
+	var pie_data_bytes_str string
+	if datapiebytes_str == "" {
+		pie_data_bytes_str = "[{value:0, name:'none'}]"
+	}else{
+		pie_data_bytes_str = "["+datapiebytes_str+"]"
+	}
+
+	if lastlog_str == "" {
+		lastlog_str        = "-"
+	}
+
 
 	p := &Var {
-		LegendData:    string(legend_data),
-		XaxisData:     string(xaxis_data),
-		ErrorsData:    string(errors_data),
-		SuccessData:   string(success_data),
-		PieData:       pie_data,
-		PieDataBytes:  pie_data_bytes,
-		LastLog:       lastlog,
-		TotalData:     totaldata,
-		TotalRequests: totalrequests,
+		LegendData:    legend_data_str,
+		XaxisData:     xaxis_data_str,
+		ErrorsData:    errors_data_str,
+		SuccessData:   success_data_str,
+		PieData:       pie_data_str,
+		PieDataBytes:  pie_data_bytes_str,
+		LastLog:       lastlog_str,
+		TotalData:     totaldata_str,
+		TotalRequests: totalrequests_str,
 	}
 	t, _ := template.ParseFiles("data.json")
 	t.Execute(w, p)
