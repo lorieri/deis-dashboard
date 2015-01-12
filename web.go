@@ -58,7 +58,7 @@ func updateRedis(){
         watchChan := make(chan *etcd.Response)
         go client.Watch("/deis/logs/host", 0, false, watchChan, nil)
         resp := <-watchChan
-        redisServer = resp.Node.Value
+        redisServer = resp.Node.Value+":6969"
         updateRedis()
 }
 
