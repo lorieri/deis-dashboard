@@ -21,7 +21,7 @@ $ deis config:set ETCD_HOSTS=http://myhost1:4001,http://myhost2:4001,http://myho
 
 # deploy the app:
 #
-# there are two ways to deploy deis-dashboard, buy its Dockerfile or by Docker Hub
+# there are two ways to deploy deis-dashboard, by its Dockerfile or by Docker Hub
 
 # by Dockerfile
 $ git push deis master
@@ -74,3 +74,8 @@ Apps page's navigation menu
  * ~~add etcd suport~~ to get router stats (waiting deis PR)
  * ~~add ENVs for confs~~
 
+## Know Issues:
+
+ * I'm new in go, goweb, bootstrap, etc...
+ * There is a race condition in redis, sometimes an app appears twice
+ * pay attention for the "last logline", it shows delays caused by poor performance
