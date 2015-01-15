@@ -15,6 +15,9 @@ $ cd deis-dashboard
 # start the backend in the cluster
 $ fleetctl start deis-dashback.service
 
+# start the log collection
+$ fleetctl start deis-dashcollect.service
+
 # create and configure your app
 $ deis create deis-dashboard
 $ deis config:set ETCD_HOSTS=http://myhost1:4001,http://myhost2:4001,http://myhost3:4001
