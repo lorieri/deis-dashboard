@@ -58,7 +58,7 @@ func updateRedis(){
         watchChan := make(chan *etcd.Response)
         go client.Watch("/deis/logs/host", 0, false, watchChan, nil)
         resp := <-watchChan
-        redisServer = resp.Node.Value+":6969"
+        redisServer = resp.Node.Value
         updateRedis()
 }
 
@@ -71,8 +71,8 @@ func setRedis(){
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println("Set Redis Server as "+resp.Node.Value+":6969")
-	        redisServer = resp.Node.Value+":6969"
+		fmt.Println("Set Redis Server as "+resp.Node.Value)
+	        redisServer = resp.Node.Value
 		go updateRedis()
 	}
 }
