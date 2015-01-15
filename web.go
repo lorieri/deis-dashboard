@@ -56,7 +56,7 @@ func getopt(name, dfault string) string {
 func updateRedis(){
         client := etcd.NewClient(etcdServers)
         watchChan := make(chan *etcd.Response)
-        go client.Watch("/deis/logs/host", 0, false, watchChan, nil)
+        go client.Watch("/deis-dashboard/redis", 0, false, watchChan, nil)
         resp := <-watchChan
         redisServer = resp.Node.Value
         updateRedis()
