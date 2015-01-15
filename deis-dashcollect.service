@@ -7,7 +7,7 @@ After=docker.socket etcd.service
 EnvironmentFile=/etc/environment
 ExecStartPre=/bin/sh -c "docker pull lorieri/deis-dashcollect:latest"
 ExecStartPre=/bin/sh -c "docker inspect deis-dashcollect >/dev/null && docker rm -f deis-collect || true"
-ExecStart=/bin/sh -c "LOGSPOUT=`docker inspect --format '{{ .NetworkSettings.IPAddress }}' deis-logspout` ; until REDIS_SERVER=`etcdctl get /deis-dashboard/redis`; do echo 'Waiting /deis-dasboard/redis' ; sleep 5 ;done ; docker run --name deis-dashcollect --rm -c 250  -e \"REDIS_SERVER=$REDIS_SERVER\" -e \"LOGSPOUT=$LOGSPOUT:8000\" lorieri/deis-dashcollect:latest"
+ExecStart=/bin/sh -c "LOGSPOUT=`docker inspect --format '{{ .NetworkSettings.IPAddress }}' deis-logspout` ; until REDIS_SERVER=`etcdctl get /deis-dashboard/redis`; do echo 'Waiting /deis-dasboard/redis' ; sleep 5 ;done ; docker run --name deis-dashcollect --rm -c 250 -e \"ETCD_HOSTS=$COREOS_PRIVATE_IPV4:4001\" -e \"REDIS_SERVER=$REDIS_SERVER\" -e \"LOGSPOUT=$LOGSPOUT:8000\" lorieri/deis-dashcollect:latest"
 Restart=on-failure
 RestartSec=5
 
