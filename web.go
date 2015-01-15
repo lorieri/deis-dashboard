@@ -67,7 +67,7 @@ func setRedis(){
 	fmt.Println("Set redisServer as "+redisServer)
 	if redisServer == "" {
 	        client := etcd.NewClient(etcdServers)
-		resp, err := client.Get("/deis/logs/host", false, false) //deis-dashback run with X-Fleet Machine-of deis-logger
+		resp, err := client.Get("/deis-dashboard/redis", false, false)
 		if err != nil {
 			panic(err)
 		}
