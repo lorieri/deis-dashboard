@@ -8,7 +8,6 @@ EnvironmentFile=/etc/environment
 ExecStartPre=/bin/sh -c "docker pull lorieri/deis-dashback:latest"
 ExecStartPre=/bin/sh -c "docker inspect deis-dashback >/dev/null && docker rm -f deis-dashback || true"
 ExecStart=/bin/sh -c "echo $COREOS_PRIVATE_IPV4:6969 |etcdctl set /deis-dashboard/redis &&  docker run --name deis-dashback --rm -c 250 -p 6969:6379 -v /var/lib/deis/store:/var/lib/deis/store lorieri/deis-dashback:latest"
-ExecStopPost=/bin/sh -c "/usr/bin/docker rm -f deis-dashback ; etcdctl rm /deis-dashboard/redis"
 Restart=on-failure
 RestartSec=5
 
