@@ -76,6 +76,8 @@ Apps page's navigation menu
  * ~~put total requests/s on the main dashboard~~ (unecessary divide by 10...)
  * ~~add etcd suport~~ to get router stats (waiting deis PR)
  * ~~add ENVs for confs~~
+ * fix etcd nil values
+ * fix chart when no traffic
 
 ## Know Issues:
 
