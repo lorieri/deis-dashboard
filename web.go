@@ -10,10 +10,20 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+	"math"
 )
 
 var redisServer string
 var etcdServers []string
+
+func Round(f float64) float64 {
+	return math.Floor(f + .5)
+}
+
+func RoundPlus(f float64, places int) (float64) {
+	shift := math.Pow(10, float64(places))
+	return Round(f * shift) / shift;
+}
 
 func main() {
 	getetcdServers := getopt("ETCD_HOSTS", "")
@@ -116,6 +126,7 @@ type Var struct {
 	TotalRequests string
 	PieData       string
 	PieDataBytes  string
+	PieDataTimes  string
 	LastLog       string
 }
 
@@ -147,11 +158,11 @@ func apps(w http.ResponseWriter, r *http.Request) {
 
 	totalupstreamtime_str, _ := client.Get("union_k_total_app_upstream_response_time_" + app).Result()
 	totalupstreamtime,_      := strconv.ParseFloat(totalupstreamtime_str, 64)
-	avgupstreamtime          := totalupstreamtime / totalrequests
+	avgupstreamtime          := RoundPlus(totalupstreamtime / totalrequests, 3)
 
 	totalrequesttime_str, _  := client.Get("union_k_total_app_request_time_" + app).Result()
 	totalrequesttime, _      := strconv.ParseFloat(totalrequesttime_str, 64)
-	avgrequesttime           := totalrequesttime / totalrequests
+	avgrequesttime           := RoundPlus(totalrequesttime / totalrequests, 3)
 
 	result, _ = client.ZRevRangeWithScores("union_z_top_app_request_"+app, "0", "10").Result()
 	toprequests := make(map[string]float64)
@@ -201,13 +212,13 @@ func apps(w http.ResponseWriter, r *http.Request) {
 		topdomains[v.Member] = v.Score
 	}
 
-	result, _ = client.ZRevRangeWithScores("union_z_top_app_upstream_response_time_range"+app, "0", "10").Result()
+	result, _ = client.ZRevRangeWithScores("union_z_top_app_upstream_response_time_range_"+app, "0", "10").Result()
 	topupstreamtime := make(map[string]float64)
 	for _, v := range result {
 		topupstreamtime[v.Member] = v.Score
 	}
 
-	result, _ = client.ZRevRangeWithScores("union_z_top_app_request_time_range"+app, "0", "10").Result()
+	result, _ = client.ZRevRangeWithScores("union_z_top_app_request_time_range_"+app, "0", "10").Result()
 	toprequesttime := make(map[string]float64)
 	for _, v := range result {
 		toprequesttime[v.Member] = v.Score
@@ -264,6 +275,7 @@ func vars(w http.ResponseWriter, r *http.Request) {
 	client               := redis.NewClient(&redis.Options{Network: "tcp", Addr: redisServer})
 	apps, _              := client.ZRangeWithScores("union_z_top_apps", 0, -1).Result()
 	appbytes, _          := client.ZRangeWithScores("union_z_top_apps_bytes_sent", 0, -1).Result()
+	apptimes, _          := client.ZRangeWithScores("union_z_top_apps_upstream_time", 0, -1).Result()
 	lastlog_str, _       := client.Get("union_s_last_log_time").Result()
 	totaldata_str, _     := client.Get("union_k_total_bytes").Result()
 	totalrequests_str, _ := client.Get("union_k_total_requests").Result()
@@ -273,6 +285,7 @@ func vars(w http.ResponseWriter, r *http.Request) {
 	datasucc         := make([]int, 0)
 	datapie_str      := ""
 	datapiebytes_str := ""
+	datapietimes_str := ""
 
 	for k, _ := range apps {
 		appname       := apps[k].Member
@@ -298,6 +311,15 @@ func vars(w http.ResponseWriter, r *http.Request) {
 		appnamebytes      := appbytes[k].Member
 		apptotalbytes_str := strconv.FormatFloat(appbytes[k].Score, 'f', 0, 64)
 		datapiebytes_str   = datapiebytes_str + "{value: " + apptotalbytes_str + ", name: '" + appnamebytes + "'},"
+	}
+
+	for k, _ := range apptimes {
+		appnametimes        :=  apptimes[k].Member
+		apptotalreqs_str, _ := client.Get("union_k_total_app_requests_" + appnametimes).Result()
+		apptotalreqs, _     := strconv.Atoi(apptotalreqs_str)
+		avgtime             := int64(apptimes[k].Score*1000) / int64(apptotalreqs)
+		appavgtime_str      := strconv.FormatInt(avgtime, 10)
+		datapietimes_str    = datapietimes_str + "{value: " + appavgtime_str + ", name: '" + appnametimes + "'},"
 	}
 
 	legend_data, _  := json.Marshal(dataapps_legend) //"['go','java','ruby','Success','Errors']"
@@ -351,6 +373,13 @@ func vars(w http.ResponseWriter, r *http.Request) {
 		pie_data_bytes_str = "[" + datapiebytes_str + "]"
 	}
 
+	var pie_data_times_str string
+	if datapietimes_str == "" {
+		pie_data_times_str = "[{value:0, name:'none'}]"
+	} else {
+		pie_data_times_str = "[" + datapietimes_str + "]"
+	}
+
 	if lastlog_str == "" {
 		lastlog_str = "-"
 	}
@@ -362,6 +391,7 @@ func vars(w http.ResponseWriter, r *http.Request) {
 		SuccessData:   success_data_str,
 		PieData:       pie_data_str,
 		PieDataBytes:  pie_data_bytes_str,
+		PieDataTimes:  pie_data_times_str,
 		LastLog:       lastlog_str,
 		TotalData:     totaldata_str,
 		TotalRequests: totalrequests_str,

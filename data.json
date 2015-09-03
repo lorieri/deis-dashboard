@@ -47,7 +47,7 @@
 	    data:'',
         },
 */
-        { name:'Total', type:'pie', tooltip : { trigger: 'item', formatter: '{a} <br/>{b} : {c} ({d}%)' }, center: [160,130], radius : [0, 80],
+        { name:'Total Success Reqs', type:'pie', tooltip : { trigger: 'item', formatter: '{a} <br/>{b} : {c} ({d}%)' }, center: [160,130], radius : [0, 80],
 
 	    data: {{.PieData}}
             ,
@@ -57,6 +57,13 @@
         { name:'Bytes Transfered', type:'pie', tooltip : { trigger: 'item', formatter: '{a} <br/>{b} : {c} ({d}%)' }, center: [460,130], radius : [0, 80],
 
             data: {{.PieDataBytes}}
+            ,
+
+            itemStyle: { normal : { labelLine: { length : 20 }}}
+        },
+        { name:'Upstream Avg ms ', type:'pie', tooltip : { trigger: 'item', formatter: '{a} <br/>{b} : {c} ({d}%)' }, center: [760,130], radius : [0, 80],
+
+            data: {{.PieDataTimes}}
             ,
 
             itemStyle: { normal : { labelLine: { length : 20 }}}

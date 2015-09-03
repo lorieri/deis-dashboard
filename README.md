@@ -6,6 +6,13 @@ It is a personal exercise to learn go, this is my first go app ever.
 
 * requires [deis-dashback](https://github.com/lorieri/deis-dashback)
 
+## New
+
+ * Upgraded to Deis 1.9.1
+ * Added requests by Domain
+ * Added upstream request times
+ * Added request times
+
 ## How-to
 
 ```
@@ -77,7 +84,7 @@ Apps page's navigation menu
  * ~~add etcd suport~~ to get router stats (waiting deis PR)
  * ~~add ENVs for confs~~
  * fix etcd nil values
- * fix chart when no traffic
+ * ~~fix chart when no traffic~~
 
 ## Know Issues:
 
