@@ -92,6 +92,8 @@ type AppPage struct {
 	BytesPerSecond   float64
 	PercentErrors    string
 	PercentSuccess   string
+	AvgUpstreamTime  float64
+	AvgRequestTime   float64
 	Requests         map[string]float64
 	StatusByUnits    map[string]float64
 	Referers         map[string]float64
@@ -100,6 +102,9 @@ type AppPage struct {
 	RequestsByStatus map[string]float64
 	RemoteByStatus   map[string]float64
 	RemoteBytesSent  map[string]float64
+	Domains          map[string]float64
+	UpstreamTime     map[string]float64
+	RequestTime      map[string]float64
 }
 
 type Var struct {
@@ -127,18 +132,26 @@ func apps(w http.ResponseWriter, r *http.Request) {
 		upstreamstatus[v.Member] = v.Score
 	}
 
-	totalrequests_str, _ := client.Get("union_k_total_app_requests_" + app).Result()
-	totalrequests, _ := strconv.ParseFloat(totalrequests_str, 64)
-	requestsseconds := totalrequests / 10
+	totalrequests_str, _  := client.Get("union_k_total_app_requests_" + app).Result()
+	totalrequests, _      := strconv.ParseFloat(totalrequests_str, 64)
+	requestsseconds       := totalrequests / 10
 
-	bytessent_str, _ := client.Get("union_k_total_app_bytes_sent_" + app).Result()
-	bytessent, _ := strconv.ParseFloat(bytessent_str, 64)
-	bytespersecond := bytessent / 10
+	bytessent_str, _      := client.Get("union_k_total_app_bytes_sent_" + app).Result()
+	bytessent, _          := strconv.ParseFloat(bytessent_str, 64)
+	bytespersecond        := bytessent / 10
 
-	totalerrors_str, _ := client.Get("union_k_total_app_errors_" + app).Result()
-	totalerrors, _ := strconv.ParseFloat(totalerrors_str, 64)
+	totalerrors_str, _    := client.Get("union_k_total_app_errors_" + app).Result()
+	totalerrors, _        := strconv.ParseFloat(totalerrors_str, 64)
 
-	totalsuccess := totalrequests - totalerrors
+	totalsuccess          := totalrequests - totalerrors
+
+	totalupstreamtime_str := client.Get("union_k_total_app_upstream_response_time_" + app).Result()
+	totalupstreamtime,_   := strconv.ParseFloat(totalresponsetime_str, 64)
+	avgupstreamtime       := totalupstreamtime / totalrequests
+
+	totalrequesttime_str  := client.Get("union_k_total_app_request_time_" + app).Result()
+	totalrequesttime, _   := strconv.ParseFloat(totalrequesttime_str, 64)
+	avgtrquesttime, _     := totalrequesttime / totalrequests
 
 	result, _ = client.ZRevRangeWithScores("union_z_top_app_request_"+app, "0", "10").Result()
 	toprequests := make(map[string]float64)
@@ -182,6 +195,24 @@ func apps(w http.ResponseWriter, r *http.Request) {
 		remotebystatus[v.Member] = v.Score
 	}
 
+	result, _ = client.ZRevRangeWithScores("union_z_top_app_domains_"+app, "0", "10").Result()
+	topdomains := make(map[string]float64)
+	for _, v := range result {
+		topdomains[v.Member] = v.Score
+	}
+
+	result, _ = client.ZRevRangeWithScores("union_z_top_app_upstream_response_time_"+app, "0", "10").Result()
+	topupstreamtime := make(map[string]float64)
+	for _, v := range result {
+		topupstreamtime[v.Member] = v.Score
+	}
+
+	result, _ = client.ZRevRangeWithScores("union_z_top_app_upstream_response_time_"+app, "0", "10").Result()
+	topresponsetime := make(map[string]float64)
+	for _, v := range result {
+		topresponsetime[v.Member] = v.Score
+	}
+
 	p := &AppPage{
 		Title:            title,
 		App:              app,
@@ -189,6 +220,8 @@ func apps(w http.ResponseWriter, r *http.Request) {
 		TotalRequests:    totalrequests,
 		TotalSuccess:     totalsuccess,
 		TotalErrors:      totalerrors,
+		AvgUpstreamTime:  avgupstreamtime,
+		AvgRequestTime:   avgrequesttime,
 		BytesPerSecond:   bytespersecond,
 		Requests:         toprequests,
 		PercentErrors:    strconv.FormatFloat(totalerrors/totalrequests*100, 'f', 1, 64),
@@ -200,6 +233,9 @@ func apps(w http.ResponseWriter, r *http.Request) {
 		RequestsByStatus: topstatus,
 		RemoteByStatus:   remotebystatus,
 		RemoteBytesSent:  remotebytessent,
+		Domains:          topdomains,
+		UpstreamTime:     topupstreamtime,
+		ResponseTime:     topresponsetime
 	}
 
 	t.Execute(w, p)
