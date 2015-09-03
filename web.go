@@ -132,26 +132,26 @@ func apps(w http.ResponseWriter, r *http.Request) {
 		upstreamstatus[v.Member] = v.Score
 	}
 
-	totalrequests_str, _  := client.Get("union_k_total_app_requests_" + app).Result()
-	totalrequests, _      := strconv.ParseFloat(totalrequests_str, 64)
-	requestsseconds       := totalrequests / 10
+	totalrequests_str, _     := client.Get("union_k_total_app_requests_" + app).Result()
+	totalrequests, _         := strconv.ParseFloat(totalrequests_str, 64)
+	requestsseconds          := totalrequests / 10
 
-	bytessent_str, _      := client.Get("union_k_total_app_bytes_sent_" + app).Result()
-	bytessent, _          := strconv.ParseFloat(bytessent_str, 64)
-	bytespersecond        := bytessent / 10
+	bytessent_str, _         := client.Get("union_k_total_app_bytes_sent_" + app).Result()
+	bytessent, _             := strconv.ParseFloat(bytessent_str, 64)
+	bytespersecond           := bytessent / 10
 
-	totalerrors_str, _    := client.Get("union_k_total_app_errors_" + app).Result()
-	totalerrors, _        := strconv.ParseFloat(totalerrors_str, 64)
+	totalerrors_str, _       := client.Get("union_k_total_app_errors_" + app).Result()
+	totalerrors, _           := strconv.ParseFloat(totalerrors_str, 64)
 
-	totalsuccess          := totalrequests - totalerrors
+	totalsuccess             := totalrequests - totalerrors
 
-	totalupstreamtime_str := client.Get("union_k_total_app_upstream_response_time_" + app).Result()
-	totalupstreamtime,_   := strconv.ParseFloat(totalresponsetime_str, 64)
-	avgupstreamtime       := totalupstreamtime / totalrequests
+	totalupstreamtime_str, _ := client.Get("union_k_total_app_upstream_response_time_" + app).Result()
+	totalupstreamtime,_      := strconv.ParseFloat(totalupstreamtime_str, 64)
+	avgupstreamtime          := totalupstreamtime / totalrequests
 
-	totalrequesttime_str  := client.Get("union_k_total_app_request_time_" + app).Result()
-	totalrequesttime, _   := strconv.ParseFloat(totalrequesttime_str, 64)
-	avgtrquesttime, _     := totalrequesttime / totalrequests
+	totalrequesttime_str, _  := client.Get("union_k_total_app_request_time_" + app).Result()
+	totalrequesttime, _      := strconv.ParseFloat(totalrequesttime_str, 64)
+	avgrequesttime           := totalrequesttime / totalrequests
 
 	result, _ = client.ZRevRangeWithScores("union_z_top_app_request_"+app, "0", "10").Result()
 	toprequests := make(map[string]float64)
@@ -207,10 +207,10 @@ func apps(w http.ResponseWriter, r *http.Request) {
 		topupstreamtime[v.Member] = v.Score
 	}
 
-	result, _ = client.ZRevRangeWithScores("union_z_top_app_upstream_response_time_"+app, "0", "10").Result()
-	topresponsetime := make(map[string]float64)
+	result, _ = client.ZRevRangeWithScores("union_z_top_app_request_time_"+app, "0", "10").Result()
+	toprequesttime := make(map[string]float64)
 	for _, v := range result {
-		topresponsetime[v.Member] = v.Score
+		toprequesttime[v.Member] = v.Score
 	}
 
 	p := &AppPage{
@@ -235,7 +235,7 @@ func apps(w http.ResponseWriter, r *http.Request) {
 		RemoteBytesSent:  remotebytessent,
 		Domains:          topdomains,
 		UpstreamTime:     topupstreamtime,
-		ResponseTime:     topresponsetime
+		RequestTime:      toprequesttime,
 	}
 
 	t.Execute(w, p)
@@ -261,25 +261,25 @@ func varsapps(w http.ResponseWriter, r *http.Request) {
 }
 
 func vars(w http.ResponseWriter, r *http.Request) {
-	client := redis.NewClient(&redis.Options{Network: "tcp", Addr: redisServer})
-	apps, _ := client.ZRangeWithScores("union_z_top_apps", 0, -1).Result()
-	appbytes, _ := client.ZRangeWithScores("union_z_top_apps_bytes_sent", 0, -1).Result()
-	lastlog_str, _ := client.Get("union_s_last_log_time").Result()
-	totaldata_str, _ := client.Get("union_k_total_bytes").Result()
+	client               := redis.NewClient(&redis.Options{Network: "tcp", Addr: redisServer})
+	apps, _              := client.ZRangeWithScores("union_z_top_apps", 0, -1).Result()
+	appbytes, _          := client.ZRangeWithScores("union_z_top_apps_bytes_sent", 0, -1).Result()
+	lastlog_str, _       := client.Get("union_s_last_log_time").Result()
+	totaldata_str, _     := client.Get("union_k_total_bytes").Result()
 	totalrequests_str, _ := client.Get("union_k_total_requests").Result()
 
-	dataapps := make([]string, 0)
-	dataerror := make([]int, 0)
-	datasucc := make([]int, 0)
-	datapie_str := ""
+	dataapps         := make([]string, 0)
+	dataerror        := make([]int, 0)
+	datasucc         := make([]int, 0)
+	datapie_str      := ""
 	datapiebytes_str := ""
 
 	for k, _ := range apps {
-		appname := apps[k].Member
-		apptotal_str := strconv.FormatFloat(apps[k].Score, 'f', 0, 64)
-		apptotal := apps[k].Score
+		appname       := apps[k].Member
+		apptotal_str  := strconv.FormatFloat(apps[k].Score, 'f', 0, 64)
+		apptotal      := apps[k].Score
 		apperr_str, _ := client.Get("union_k_total_app_errors_" + appname).Result()
-		apperr, _ := strconv.Atoi(apperr_str)
+		apperr, _     := strconv.Atoi(apperr_str)
 
 		appsuc := int(apptotal) - int(apperr)
 		if appsuc < 0 {
@@ -287,20 +287,20 @@ func vars(w http.ResponseWriter, r *http.Request) {
 		}
 		// appreqs := apptotal/10
 
-		dataapps = append(dataapps, appname)
-		dataerror = append(dataerror, apperr)
-		datasucc = append(datasucc, appsuc)
+		dataapps    = append(dataapps, appname)
+		dataerror   = append(dataerror, apperr)
+		datasucc    = append(datasucc, appsuc)
 		datapie_str = datapie_str + "{value: " + apptotal_str + ", name: '" + appname + "'}," // ...
 	}
 	dataapps_legend := append(dataapps, "Success", "Errors")
 
 	for k, _ := range appbytes {
-		appnamebytes := appbytes[k].Member
+		appnamebytes      := appbytes[k].Member
 		apptotalbytes_str := strconv.FormatFloat(appbytes[k].Score, 'f', 0, 64)
-		datapiebytes_str = datapiebytes_str + "{value: " + apptotalbytes_str + ", name: '" + appnamebytes + "'},"
+		datapiebytes_str   = datapiebytes_str + "{value: " + apptotalbytes_str + ", name: '" + appnamebytes + "'},"
 	}
 
-	legend_data, _ := json.Marshal(dataapps_legend) //"['go','java','ruby','Success','Errors']"
+	legend_data, _  := json.Marshal(dataapps_legend) //"['go','java','ruby','Success','Errors']"
 	legend_data_str := string(legend_data)
 
 	//&{LegendData:["Success","Errors"] XaxisData:[] ErrorsData:[] SuccessData:[] TotalData: TotalRequests: PieData:[] PieDataBytes:[] LastLog:}
