@@ -299,7 +299,7 @@
                     </tr>
                   </thead>
                   <tbody>
-                    {{range $k, $v := .ResponseTime}}<tr><td>{{$v}}</td><td>{{$k}}</td></tr>{{end}}
+                    {{range $k, $v := .RequestTime}}<tr><td>{{$v}}</td><td>{{$k}}</td></tr>{{end}}
                   </tbody>
                 </table>
               </div>

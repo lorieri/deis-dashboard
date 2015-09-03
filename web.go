@@ -201,13 +201,13 @@ func apps(w http.ResponseWriter, r *http.Request) {
 		topdomains[v.Member] = v.Score
 	}
 
-	result, _ = client.ZRevRangeWithScores("union_z_top_app_upstream_response_time_"+app, "0", "10").Result()
+	result, _ = client.ZRevRangeWithScores("union_z_top_app_upstream_response_time_range"+app, "0", "10").Result()
 	topupstreamtime := make(map[string]float64)
 	for _, v := range result {
 		topupstreamtime[v.Member] = v.Score
 	}
 
-	result, _ = client.ZRevRangeWithScores("union_z_top_app_request_time_"+app, "0", "10").Result()
+	result, _ = client.ZRevRangeWithScores("union_z_top_app_request_time_range"+app, "0", "10").Result()
 	toprequesttime := make(map[string]float64)
 	for _, v := range result {
 		toprequesttime[v.Member] = v.Score
