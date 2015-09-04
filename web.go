@@ -250,6 +250,8 @@ func apps(w http.ResponseWriter, r *http.Request) {
 	}
 
 	t.Execute(w, p)
+
+	client.Close()
 }
 
 func varappsname(w http.ResponseWriter, r *http.Request) {
@@ -266,6 +268,7 @@ func varappsname(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, "["+appsjson+"]")
+	client.Close()
 }
 
 func varsapps(w http.ResponseWriter, r *http.Request) {
@@ -398,6 +401,7 @@ func vars(w http.ResponseWriter, r *http.Request) {
 	}
 	t, _ := template.ParseFiles("data.json")
 	t.Execute(w, p)
+	client.Close()
 }
 
 func dashboard(w http.ResponseWriter, r *http.Request) {
