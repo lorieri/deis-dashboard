@@ -1,4 +1,4 @@
-FROM google/golang
+FROM google/golang:1.3.1
 
 RUN go get gopkg.in/redis.v2 github.com/coreos/go-etcd/etcd
 
